@@ -25,8 +25,7 @@ Pretrained word embeddings.</br>
 
 
 Biaffine parser hidden.</br>
-
-https://drive.google.com/drive/folders/1has4GJ98RUGKRDB0slHDseWF9dJ4JrNg?usp=sharing</br>
+*https://drive.google.com/drive/folders/1has4GJ98RUGKRDB0slHDseWF9dJ4JrNg?usp=sharing*</br>
 
 
 ## NOTE ##
