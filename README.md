@@ -20,7 +20,13 @@ RST Tree Bank.</br>
 
 ## External Resource ##
 Pretrained word embeddings.</br>
-*https://nlp.stanford.edu/projects/glove*
+*https://nlp.stanford.edu/projects/glove*</br>
+
+
+
+Biaffine parser hidden.</br>
+
+https://drive.google.com/drive/folders/1has4GJ98RUGKRDB0slHDseWF9dJ4JrNg?usp=sharing</br>
 
 
 ## NOTE ##
