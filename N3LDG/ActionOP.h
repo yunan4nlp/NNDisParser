@@ -56,6 +56,19 @@ class ActionParams {
         return idx;
     }
 
+    inline void save(std::ofstream &os){
+        W.save(os);
+        os << nVSize << std::endl;
+        os << nDim << std::endl;
+    }
+
+    inline void load(std::ifstream &is, PAlphabet alpha) {
+        W.load(is);
+        is >> nVSize;
+        is >> nDim;
+        elems = alpha;
+    }
+
 };
 
 //only implemented sparse linear node.

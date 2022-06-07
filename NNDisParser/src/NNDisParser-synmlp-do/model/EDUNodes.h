@@ -31,6 +31,26 @@ struct EDUParams {
 		syn_lstm_left_params.exportAdaParams(ada);
 		syn_lstm_right_params.exportAdaParams(ada);
 	}
+
+	inline void save(std::ofstream &os){
+		word_table.save(os);
+		tag_table.save(os);
+		word_represent_params.save(os);
+		word_lstm_left_params.save(os);
+		word_lstm_right_params.save(os);
+		syn_lstm_left_params.save(os);
+		syn_lstm_right_params.save(os);
+	}
+
+	inline void load(std::ifstream &is){
+		word_table.load(is, word_table.elems);
+		tag_table.load(is, tag_table.elems);
+		word_represent_params.load(is);
+		word_lstm_left_params.load(is);
+		word_lstm_right_params.load(is);
+		syn_lstm_left_params.load(is);
+		syn_lstm_right_params.load(is);
+	}
 };
 
 class EDUNodes{

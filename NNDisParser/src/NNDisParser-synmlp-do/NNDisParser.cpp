@@ -345,8 +345,69 @@ void DisParser::train(const string &trainFile, const string &devFile,
 	}
 }
 
-void DisParser::test(const string &testFile, const string &outputFile, const string &modelFile) {
+void DisParser::test(const string &testFile, const string &outputFile, const string &modelFile, const string&optionFile) {
+	if (optionFile != "")
+	m_options.load(optionFile);
+	m_options.showOptions();
+	m_driver._hyperparams.setRequared(m_options);
 
+	vector<Instance> testInsts;
+	m_pipe.readInstances(testFile, testInsts, m_options.maxInstance);
+	getDepFeats(testInsts, m_options.conllFolder + path_separator + "test.conll.predict");
+
+	int word_count = 0, max_size;
+
+	max_size = testInsts.size();
+	for (int idx = 0; idx < max_size; idx++) {
+		word_count += testInsts[idx].words.size();
+	}
+	extern_nodes.resize(word_count * 10);
+	node_count = 0;
+
+	string syn = "conll.dump.results";
+	getSynFeats(testInsts, m_options.dumpFolder + path_separator + "test." + syn);
+
+	m_driver._modelparams.edu_params.word_table.elems = &m_driver._hyperparams.wordAlpha;
+	m_driver._modelparams.edu_params.tag_table.elems = &m_driver._hyperparams.tagAlpha;
+	m_driver._modelparams.etype_table.elems = &m_driver._hyperparams.etypeAlpha;
+	m_driver._modelparams.scored_action_table.elems = &m_driver._hyperparams.actionAlpha;
+
+	loadModelFile(modelFile);
+	getDepFeats(testInsts, m_options.conllFolder + path_separator + "test.conll.predict");
+	vector<CResult> decodeInstResults;
+	int testNum = testInsts.size();
+
+	Metric test_span, test_nuclear, test_relation, test_full;
+	if (testNum > 0) {
+		auto t_start_test = std::chrono::high_resolution_clock::now();
+		cout << "Test start." << std::endl;
+		if (!m_options.outBest.empty()) {
+			decodeInstResults.clear();
+		}
+		test_span.reset();
+		test_nuclear.reset();
+		test_relation.reset();
+		test_full.reset();
+		predict(testInsts, decodeInstResults);
+		for (int idx = 0; idx < testInsts.size(); idx++) {
+			testInsts[idx].evaluate(decodeInstResults[idx], test_span, test_nuclear, test_relation, test_full);
+		}
+		auto t_end_test = std::chrono::high_resolution_clock::now();
+		cout << "Test finished. Total time taken is: " << std::chrono::duration<double>(t_end_test - t_start_test).count() << std::endl;
+		cout << "test:" << std::endl;
+		cout << "S: ";
+		test_span.print();
+		cout << "N: ";
+		test_nuclear.print();
+		cout << "R: ";
+		test_relation.print();
+		cout << "F: ";
+		test_full.print();
+
+		if (!m_options.outBest.empty()) {
+			m_pipe.outputAllInstances(testFile + m_options.outBest + ".test", decodeInstResults);
+		}
+	}
 }
 
 void DisParser::getDepFeats(vector<Instance> &vecInsts, const string &path) {
@@ -576,9 +637,19 @@ void DisParser::getSynFeats(vector<Instance> &vecInsts, const string &folder) {
 }
 
 
-void DisParser::writeModelFile(const string &outputModelFile) {}
+void DisParser::writeModelFile(const string &outputModelFile) {
+	ofstream outf(outputModelFile.c_str());
+	m_driver._hyperparams.write(outf);
+	m_driver._modelparams.saveModel(outf);	
+	outf.close();
+}
 
-void DisParser::loadModelFile(const string &inputModelFile) {}
+void DisParser::loadModelFile(const string &inputModelFile) {
+	ifstream inf(inputModelFile.c_str());
+	m_driver._hyperparams.read(inf);
+	m_driver._modelparams.loadModel(inf);
+	inf.close();
+}
 
 void DisParser::predict(const vector<Instance> &inputs, vector<CResult> &outputs) {
 	vector<Instance> batch_input;
@@ -622,7 +693,7 @@ int main(int argc, char* argv[]) {
 		parser.train(trainFile, devFile, testFile, modelFile, optionFile);
 	}
 	else {
-		parser.test(testFile, outputFile, modelFile);
+		parser.test(testFile, outputFile, modelFile, optionFile);
 	}
 
 	return 0;

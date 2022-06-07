@@ -57,13 +57,28 @@ struct HyperParams {
 	Alphabet actionAlpha;
 	Alphabet labelAlpha;
 	Alphabet tagAlpha;
-
 	Alphabet etypeAlpha;
 
 public:
 	HyperParams() {
 		bAssigned = false;
 		dynamicOracle = false;
+	}
+
+	void write(std::ofstream &os){
+		wordAlpha.write(os);
+		actionAlpha.write(os);
+		labelAlpha.write(os);
+		tagAlpha.write(os);
+		etypeAlpha.write(os);
+	}
+
+	void read(std::ifstream &is){
+		wordAlpha.read(is);
+		actionAlpha.read(is);
+		labelAlpha.read(is);
+		tagAlpha.read(is);
+		etypeAlpha.read(is);
 	}
 
 	void setRequared(Options &opt) {

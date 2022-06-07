@@ -57,9 +57,23 @@ public:
 		scored_action_table.exportAdaParams(ada);
 	}
 
-	void saveModel() {}
+	void saveModel(std::ofstream &os) {
+		edu_params.save(os);
+		syn_params.save(os);
+		etype_table.save(os);
+		edu_lstm_left_layer1_params.save(os);
+		edu_lstm_right_layer1_params.save(os);
+		scored_action_table.save(os);
+	}
 
-	void loadModel() {}
+	void loadModel(std::ifstream &is) {
+		edu_params.load(is);
+		syn_params.load(is);
+		etype_table.load(is, etype_table.elems);
+		edu_lstm_left_layer1_params.load(is);
+		edu_lstm_right_layer1_params.load(is);
+		scored_action_table.load(is, scored_action_table.elems);
+	}
 
 };
 
