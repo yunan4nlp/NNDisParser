@@ -11,6 +11,14 @@ struct SynParams {
 	inline void exportAdaParams(ModelUpdate& ada) {
 		syn_combine.exportAdaParams(ada);
 	}
+
+	inline void save(std::ofstream &os){
+		syn_combine.save(os);
+	}
+
+	inline void load(std::ifstream &is){
+		syn_combine.load(is);
+	}
 };
 
 struct SynNodes{

@@ -34,4 +34,5 @@ public:
 public:
 	void writeModelFile(const string &outputModelFile);
 	void loadModelFile(const string &inputModelFile);
+	void test(const string &testFile, const string &outputFile, const string &modelFile, const string&optionFile);
 };
