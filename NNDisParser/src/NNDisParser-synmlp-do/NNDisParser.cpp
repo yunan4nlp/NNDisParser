@@ -352,7 +352,7 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 	m_driver._hyperparams.setRequared(m_options);
 	
 	/%
-	IMPRTANT: the model is loaded in before everything; otherwise we used to get `Segmentation Fault` in the next initialization steps.
+	   IMPRTANT: the model is loaded just in the beginning; otherwise we used to get `Segmentation Fault` in the next initialization steps.
 	%/
 	loadModelFile(modelFile);
 
@@ -372,7 +372,7 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 	getSynFeats(testInsts, testFile + ".dump");
 
 	/* 
-		NOTE (Mat-sipahi): The following lines (down to `m_driver.initial`) are copied from `train` function 
+	    NOTE (Mat-sipahi): The following lines (down to `m_driver.initial`) are copied from `train` function 
             in order to avoid segmentations fault we used to get because if uninitalized hyperparams in different parts of the code.
             But I'm not sure which one of them is redundant or coming in incorrect order.
 	*/
@@ -407,11 +407,11 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 	m_driver.initial();
 	
 	/*
-		End of the block copied from `train` (Mat-sipahi)
+	    End of the block copied from `train` (Mat-sipahi)
 	*/
 	
 	/*
-		IMPORTANT: model is loaded for the second time. The parser was predicting all relations as ENABLEMENT without it. 
+            IMPORTANT: model is loaded for the second time. The parser was predicting all relations as ENABLEMENT without it. 
 	*/
 	loadModelFile(modelFile);
 
