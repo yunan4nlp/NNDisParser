@@ -402,6 +402,7 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 	//m_driver._hyperparams.etypeAlpha.initial(m_driver._hyperparams.etype_stat, 0);
 
 	m_driver.initial();
+	loadModelFile(modelFile);
 
 	/*
 		End of the block copied from `train` (Mat-sipahi)
