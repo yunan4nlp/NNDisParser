@@ -461,7 +461,6 @@ void DisParser::getDepFeats(vector<Instance> &vecInsts, const string &path) {
 				dep_feat.heads[idx] = atoi(info[6].c_str()) - 1;
 				dep_feat.dep_relations[idx] = info[7];
 			}
-
 			Instance &cur_inst = vecInsts[index];
 			cur_inst.dep_feats.push_back(dep_feat);
 			if (cur_inst.sent_types.size() == cur_inst.dep_feats.size()) {
@@ -579,6 +578,7 @@ void DisParser::getSynFeats(vector<Instance> &vecInsts, const string &folder) {
 			vecLine4.size() != vec_size || vecLine5.size() != vec_size) {
 			std::cout << "extern feature input error" << std::endl;
 		}
+
 		Instance &cur_inst = vecInsts[index];
 		const DepFeat &cur_dep_feat = cur_inst.dep_feats[num - offset];
 		if (num - offset == 0)
