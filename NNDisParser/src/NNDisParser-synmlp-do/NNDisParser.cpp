@@ -350,7 +350,10 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 	m_options.load(optionFile);
 	m_options.showOptions();
 	m_driver._hyperparams.setRequared(m_options);
-
+	
+	/%
+	IMPRTANT: the model is loaded in before everything; otherwise we used to get `Segmentation Fault` in the next initialization steps.
+	%/
 	loadModelFile(modelFile);
 
 	vector<Instance> testInsts;
@@ -370,7 +373,7 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 
 	/* 
 		NOTE (Mat-sipahi): The following lines (down to `m_driver.initial`) are copied from `train` function 
-            in order to avoid segmentations faults we used to get because if uninitalized hyperparams in different parts of the code.
+            in order to avoid segmentations fault we used to get because if uninitalized hyperparams in different parts of the code.
             But I'm not sure which one of them is redundant or coming in incorrect order.
 	*/
 	addTestAlpha(testInsts);
@@ -402,11 +405,15 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 	//m_driver._hyperparams.etypeAlpha.initial(m_driver._hyperparams.etype_stat, 0);
 
 	m_driver.initial();
-	loadModelFile(modelFile);
-
+	
 	/*
 		End of the block copied from `train` (Mat-sipahi)
 	*/
+	
+	/*
+		IMPORTANT: model is loaded for the second time. The parser was predicting all relations as ENABLEMENT without it. 
+	*/
+	loadModelFile(modelFile);
 
 	vector<CResult> decodeInstResults;
 	int testNum = testInsts.size();
