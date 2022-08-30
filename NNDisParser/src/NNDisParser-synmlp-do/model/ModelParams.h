@@ -65,7 +65,8 @@ public:
 		edu_lstm_right_layer1_params.save(os);
 		scored_action_table.save(os);
 	}
-
+	
+	// NOTE: the model should read data from the initailized hyperparams
 	void loadModel(std::ifstream &is, HyperParams &opts) {
 		edu_params.load(is);
 		syn_params.load(is);
