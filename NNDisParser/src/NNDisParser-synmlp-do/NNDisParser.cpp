@@ -373,8 +373,8 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 
 	/* 
 	    NOTE (Mat-sipahi): The following lines (down to `m_driver.initial`) are copied from `train` function 
-            in order to avoid segmentations fault we used to get because if uninitalized hyperparams in different parts of the code.
-            But I'm not sure which one of them is redundant or coming in incorrect order.
+            in order to avoid segmentations fault caused by uninitalized hyperparams in different parts of the code.
+            But I've commented out unnecessary steps, but I'm not sure if there are any other redindant steps.
 	*/
 	addTestAlpha(testInsts);
 	//createAlphabet(trainInsts);
