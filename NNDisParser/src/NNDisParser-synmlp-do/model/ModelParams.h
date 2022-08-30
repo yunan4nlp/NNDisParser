@@ -66,13 +66,13 @@ public:
 		scored_action_table.save(os);
 	}
 
-	void loadModel(std::ifstream &is) {
+	void loadModel(std::ifstream &is, HyperParams &opts) {
 		edu_params.load(is);
 		syn_params.load(is);
-		etype_table.load(is, etype_table.elems);
+		etype_table.load(is, &opts.etypeAlpha);
 		edu_lstm_left_layer1_params.load(is);
 		edu_lstm_right_layer1_params.load(is);
-		scored_action_table.load(is, scored_action_table.elems);
+		scored_action_table.load(is, &opts.actionAlpha);
 	}
 
 };

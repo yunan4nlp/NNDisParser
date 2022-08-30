@@ -198,7 +198,6 @@ void DisParser::train(const string &trainFile, const string &devFile,
 		m_driver._modelparams.edu_params.word_table.initial(&m_driver._hyperparams.wordAlpha, m_options.wordEmbFile, m_options.wordFineTune);
 	m_driver._hyperparams.wordDim = m_driver._modelparams.edu_params.word_table.nDim;
 
-	cout << "X1 STARTING \n";
 	m_driver._modelparams.edu_params.tag_table.initial(&m_driver._hyperparams.tagAlpha, m_options.tagEmbSize, m_options.tagFineTune);
 	m_driver._hyperparams.tagDim = m_driver._modelparams.edu_params.tag_table.nDim;
 
@@ -210,7 +209,6 @@ void DisParser::train(const string &trainFile, const string &devFile,
 	m_driver._hyperparams.eduConcatDim = m_driver._hyperparams.eduHiddenDim + m_driver._hyperparams.etypeDim;
 	//m_driver._hyperparams.eduConcatDim = m_driver._hyperparams.eduHiddenDim;
 
-	cout << "Y1 STARTING \n";
 	m_driver.initial();
 
 	double bestFmeasure = -1;
@@ -284,6 +282,36 @@ void DisParser::train(const string &trainFile, const string &devFile,
 		vector<CResult> decodeInstResults;
 		Metric dev_span, dev_nuclear, dev_relation, dev_full;
 		Metric test_span, test_nuclear, test_relation, test_full;
+
+		if (true){
+			Metric train_span, train_nuclear, train_relation, train_full;
+			auto t_start_train = std::chrono::high_resolution_clock::now();
+			cout << "Train start." << std::endl;
+			train_span.reset();
+			train_nuclear.reset();
+			train_relation.reset();
+			predict(trainInsts, decodeInstResults);
+			int trainNum = trainInsts.size();
+			for (int idx = 0; idx < trainNum; idx++) {
+				trainInsts[idx].evaluate(decodeInstResults[idx], train_span, train_nuclear, train_relation, train_full);
+			}
+			auto t_end_train = std::chrono::high_resolution_clock::now();
+			cout << "Train Performance measured. Total time taken is: " << std::chrono::duration<double>(t_end_train - t_start_train).count() << std::endl;
+			cout << "train:" << std::endl;
+			cout << "S: ";
+			train_span.print();
+			cout << "N: ";
+			train_nuclear.print();
+			cout << "R: ";
+			train_relation.print();
+			cout << "F: ";
+			train_full.print();
+			if (!m_options.outBest.empty() && train_full.getAccuracy() > bestFmeasure) {
+				m_pipe.outputAllInstances(trainFile + m_options.outBest + to_string(iter), decodeInstResults);
+			}
+		}
+
+
 
 
 		if (devNum > 0) {
@@ -362,12 +390,13 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 	m_options.showOptions();
 	m_driver._hyperparams.setRequared(m_options);
 
+	loadModelFile(modelFile);
+
 	vector<Instance> testInsts;
 	m_pipe.readInstances(testFile, testInsts, m_options.maxInstance);
-	getDepFeats(testInsts, m_options.conllFolder + path_separator + "test.conll.predict");
+	getDepFeats(testInsts, testFile + ".conll");
 
 	int word_count = 0, max_size;
-
 	max_size = testInsts.size();
 	for (int idx = 0; idx < max_size; idx++) {
 		word_count += testInsts[idx].words.size();
@@ -375,18 +404,41 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 	extern_nodes.resize(word_count * 10);
 	node_count = 0;
 
-	string syn = "conll.dump.results";
-	getSynFeats(testInsts, m_options.dumpFolder + path_separator + "test." + syn);
+	getSynFeats(testInsts, testFile + ".dump");
+
+	addTestAlpha(testInsts);
+	//createAlphabet(trainInsts);
+	//getGoldActions(trainInsts);
+
+    //if(m_options.wordEmbFile == "") {
+	//	m_driver._modelparams.edu_params.word_table.initial(&m_driver._hyperparams.wordAlpha, m_options.wordEmbSize, m_options.wordFineTune);
+	//}
+	//else
+	//	m_driver._modelparams.edu_params.word_table.initial(&m_driver._hyperparams.wordAlpha, m_options.wordEmbFile, m_options.wordFineTune);
+	m_driver._hyperparams.wordDim = m_driver._modelparams.edu_params.word_table.nDim;
+	m_driver._modelparams.edu_params.tag_table.initial(&m_driver._hyperparams.tagAlpha, m_options.tagEmbSize, m_options.tagFineTune);
+	m_driver._hyperparams.tagDim = m_driver._modelparams.edu_params.tag_table.nDim;
+
+	m_driver._hyperparams.wordConcatDim = m_driver._hyperparams.wordDim + m_driver._hyperparams.tagDim;
+	//m_driver._modelparams.etype_table.initial(&m_driver._hyperparams.etypeAlpha, m_options.etypeEmbSize, m_options.etypeFineTune);
+	m_driver._hyperparams.etypeDim = m_driver._modelparams.etype_table.nDim;
+	m_driver._hyperparams.eduConcatDim = m_driver._hyperparams.eduHiddenDim + m_driver._hyperparams.etypeDim;
+	//m_driver._hyperparams.eduConcatDim = m_driver._hyperparams.eduHiddenDim;
 
 	m_driver._modelparams.edu_params.word_table.elems = &m_driver._hyperparams.wordAlpha;
 	m_driver._modelparams.edu_params.tag_table.elems = &m_driver._hyperparams.tagAlpha;
 	m_driver._modelparams.etype_table.elems = &m_driver._hyperparams.etypeAlpha;
 	m_driver._modelparams.scored_action_table.elems = &m_driver._hyperparams.actionAlpha;
+	
+	//m_driver._hyperparams.actionAlpha.initial(m_driver._hyperparams.action_stat, 0);
+	m_driver._hyperparams.actionNum = m_driver._hyperparams.actionAlpha.size();
+	//m_driver._hyperparams.etypeAlpha.initial(m_driver._hyperparams.etype_stat, 0);
 
-	loadModelFile(modelFile);
-	getDepFeats(testInsts, m_options.conllFolder + path_separator + "test.conll.predict");
+	m_driver.initial();
+
 	vector<CResult> decodeInstResults;
 	int testNum = testInsts.size();
+
 
 	Metric test_span, test_nuclear, test_relation, test_full;
 	if (testNum > 0) {
@@ -399,7 +451,9 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 		test_nuclear.reset();
 		test_relation.reset();
 		test_full.reset();
+
 		predict(testInsts, decodeInstResults);
+
 		for (int idx = 0; idx < testInsts.size(); idx++) {
 			testInsts[idx].evaluate(decodeInstResults[idx], test_span, test_nuclear, test_relation, test_full);
 		}
@@ -415,9 +469,7 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 		cout << "F: ";
 		test_full.print();
 
-		if (!m_options.outBest.empty()) {
-			m_pipe.outputAllInstances(testFile + m_options.outBest + ".test", decodeInstResults);
-		}
+		m_pipe.outputAllInstances(outputFile, decodeInstResults);
 	}
 }
 
@@ -470,7 +522,17 @@ void DisParser::getDepFeats(vector<Instance> &vecInsts, const string &path) {
 		for (int idy = 0; idy < dep_feat_size; idy++) {
 			word_num += inst.dep_feats[idy].words.size();
 		}
-		if (word_num != inst.words.size()) cout << path << " +++ " << idx << " ----- " << word_num << "<>" << inst.words.size() << endl;
+		if (word_num != inst.words.size()) {
+			cout << path << " +++ " << idx << " ----- " << word_num << "<>" << inst.words.size() << endl;
+			for (int i = 0; i < inst.words.size(); i ++) {
+				cout << inst.words[i] << " ";
+			}
+			cout <<"---------------" <<endl;
+			for (int idy = 0; idy < dep_feat_size; idy++) {
+				for (int i = 0; i < inst.dep_feats[idy].words.size(); i++) cout << inst.dep_feats[idy].words[i] << " ";
+			}
+			cout <<"---------------" <<endl;
+		}
 		assert(word_num == inst.words.size());
 		i = 0, offset = 0;
 		for (int idy = 0; idy < word_num; idy++) {
@@ -570,6 +632,8 @@ void DisParser::getSynFeats(vector<Instance> &vecInsts, const string &folder) {
 		}
 		if (vecLine2.size() != vec_size || vecLine3.size() != vec_size ||
 			vecLine4.size() != vec_size || vecLine5.size() != vec_size) {
+			cout << vec_size << "-" << vecLine2.size() << "-" << vecLine3.size() << "-" << 
+			vecLine4.size() << "-" << vecLine5.size() << endl;
 			std::cout << "extern feature input error" << std::endl;
 		}
 		Instance &cur_inst = vecInsts[index];
@@ -584,7 +648,9 @@ void DisParser::getSynFeats(vector<Instance> &vecInsts, const string &folder) {
 			split_bychar(vecLine1[i], vecInfo, ' ');
 			
 			if (normalize_to_lowerwithdigit(vecInfo[0]).compare(cur_dep_feat.words[i]) != 0) {
-				cout << vecInfo[0] << " normalized: " << normalize_to_lowerwithdigit(vecInfo[0]) << " <> " << cur_dep_feat.words[i] << endl;
+			cout << vecInfo[0] << " (" << i << ") normalized: " << normalize_to_lowerwithdigit(vecInfo[0]) << " <> " << cur_dep_feat.words[i] << endl;
+				for (int k = 0; k < vec_size; k ++) cout << cur_dep_feat.words[k] << " "; cout << endl;
+
 			}
 			assert(normalize_to_lowerwithdigit(vecInfo[0]).compare(cur_dep_feat.words[i]) == 0);
 		}
@@ -700,6 +766,8 @@ void DisParser::getSynFeats(vector<Instance> &vecInsts, const string &folder) {
 
 
 void DisParser::writeModelFile(const string &outputModelFile) {
+  	cout << "writeModelFile:" << outputModelFile;
+	cout << "outputModelFile: " << outputModelFile << endl;
 	ofstream outf(outputModelFile.c_str());
 	m_driver._hyperparams.write(outf);
 	m_driver._modelparams.saveModel(outf);	
@@ -709,7 +777,7 @@ void DisParser::writeModelFile(const string &outputModelFile) {
 void DisParser::loadModelFile(const string &inputModelFile) {
 	ifstream inf(inputModelFile.c_str());
 	m_driver._hyperparams.read(inf);
-	m_driver._modelparams.loadModel(inf);
+	m_driver._modelparams.loadModel(inf, m_driver._hyperparams);
 	inf.close();
 }
 
@@ -731,7 +799,7 @@ void DisParser::predict(const vector<Instance> &inputs, vector<CResult> &outputs
 
 
 int main(int argc, char* argv[]) {
-	std::string trainFile = "", devFile = "", testFile = "", modelFile = "";
+	std::string trainFile = "", devFile = "", testFile = "", modelFile = "./model.bin";
 	std::string optionFile = "";
 	std::string outputFile = "";
 	bool bTrain = false;

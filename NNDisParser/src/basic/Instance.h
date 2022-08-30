@@ -286,8 +286,9 @@ public:
 			EDU &edu = edus[idx];
 			assert(edu.start_index <= edu.end_index);
 			assert(edu.start_index >= 0 && edu.end_index < total_text_size);
-			if (idx < edu_size - 1)
+			if (idx != edu_size - 1) {
 				assert(edu.end_index + 1 == edus[idx + 1].start_index);
+			}
 			for (int idy = edu.start_index; idy <= edu.end_index; idy++) {
 				if(total_tags[idy] != nullkey){
 					edu.words.push_back(normalize_to_lowerwithdigit(total_text[idy]));
