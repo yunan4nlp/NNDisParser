@@ -172,6 +172,7 @@ void DisParser::train(const string &trainFile, const string &devFile,
 	node_count = 0;
 
 	string syn = "conll.dump.results";
+	getSynFeats(trainInsts, m_options.dumpFolder + path_separator + "train." + syn);
 	getSynFeats(devInsts, m_options.dumpFolder + path_separator + "dev." + syn);
 	getSynFeats(testInsts, m_options.dumpFolder + path_separator + "test." + syn);
 	
@@ -179,7 +180,6 @@ void DisParser::train(const string &trainFile, const string &devFile,
 	for (int idx = 0; idx < m_options.testFiles.size(); idx++) {
 		m_pipe.readInstances(m_options.testFiles[idx], otherInsts[idx], m_options.maxInstance);
 	}
-
 	addTestAlpha(devInsts);
 	addTestAlpha(testInsts);
 	createAlphabet(trainInsts);
@@ -190,6 +190,7 @@ void DisParser::train(const string &trainFile, const string &devFile,
 	else
 		m_driver._modelparams.edu_params.word_table.initial(&m_driver._hyperparams.wordAlpha, m_options.wordEmbFile, m_options.wordFineTune);
 	m_driver._hyperparams.wordDim = m_driver._modelparams.edu_params.word_table.nDim;
+
 
 	m_driver._modelparams.edu_params.tag_table.initial(&m_driver._hyperparams.tagAlpha, m_options.tagEmbSize, m_options.tagFineTune);
 	m_driver._hyperparams.tagDim = m_driver._modelparams.edu_params.tag_table.nDim;
@@ -212,7 +213,6 @@ void DisParser::train(const string &trainFile, const string &devFile,
 	int batchBlock = inputSize / m_options.batchSize;
 	if (inputSize % m_options.batchSize != 0)
 		batchBlock++;
-	
 	vector<Instance> subInstances;
 	Metric eval;
 	for (int iter = 0; iter < m_options.maxIter; ++iter) {
@@ -273,6 +273,7 @@ void DisParser::train(const string &trainFile, const string &devFile,
 		vector<CResult> decodeInstResults;
 		Metric dev_span, dev_nuclear, dev_relation, dev_full;
 		Metric test_span, test_nuclear, test_relation, test_full;
+
 
 		if (devNum > 0) {
 			auto t_start_dev = std::chrono::high_resolution_clock::now();
@@ -357,6 +358,7 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 	getDepFeats(testInsts, testFile + ".conll");
 
 	int word_count = 0, max_size;
+
 	max_size = testInsts.size();
 	for (int idx = 0; idx < max_size; idx++) {
 		word_count += testInsts[idx].words.size();
@@ -368,8 +370,8 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 
 	/* 
 		NOTE (Mat-sipahi): The following lines (down to `m_driver.initial`) are copied from `train` function 
-	          in order to avoid segmentations faults we used to get because if uninitalized hyperparams in different parts of the code.
-			  But I'm not sure which one of them is redundant or coming in incorrect order.
+            in order to avoid segmentations faults we used to get because if uninitalized hyperparams in different parts of the code.
+            But I'm not sure which one of them is redundant or coming in incorrect order.
 	*/
 	addTestAlpha(testInsts);
 	//createAlphabet(trainInsts);
@@ -407,7 +409,6 @@ void DisParser::test(const string &testFile, const string &outputFile, const str
 
 	vector<CResult> decodeInstResults;
 	int testNum = testInsts.size();
-
 
 	Metric test_span, test_nuclear, test_relation, test_full;
 	if (testNum > 0) {
@@ -460,6 +461,7 @@ void DisParser::getDepFeats(vector<Instance> &vecInsts, const string &path) {
 				dep_feat.heads[idx] = atoi(info[6].c_str()) - 1;
 				dep_feat.dep_relations[idx] = info[7];
 			}
+
 			Instance &cur_inst = vecInsts[index];
 			cur_inst.dep_feats.push_back(dep_feat);
 			if (cur_inst.sent_types.size() == cur_inst.dep_feats.size()) {
@@ -472,7 +474,6 @@ void DisParser::getDepFeats(vector<Instance> &vecInsts, const string &path) {
 		else
 			vecLines.push_back(line);
 	}
-	
 	file.close();
 	// checking...
 	int inst_size = vecInsts.size();
@@ -599,16 +600,10 @@ void DisParser::getSynFeats(vector<Instance> &vecInsts, const string &folder) {
 			cur_inst.syn_feats[syn_offset].resize(6);
 
 			split_bychar(vecLine1[i], vecInfo, ' ');
-			assert(vecInfo.size() == 501);
+			assert(vecInfo.size() == 501); 
 			extern_nodes[node_count].init(500, -1);
 			cur_inst.syn_feats[syn_offset][0] = &extern_nodes[node_count];
 			for (int j = 0; j < 500; j++) {
-				extern_nodes[node_count].val[j] = atof(vecInfo[j + 1].c_str());
-			}
-			assert(vecInfo.size() == 513);
-			extern_nodes[node_count].init(512, -1);
-			cur_inst.syn_feats[syn_offset][0] = &extern_nodes[node_count];
-			for (int j = 0; j < 512; j++) {
 				extern_nodes[node_count].val[j] = atof(vecInfo[j + 1].c_str());
 			}
 			node_count++;
@@ -620,12 +615,6 @@ void DisParser::getSynFeats(vector<Instance> &vecInsts, const string &folder) {
 			for (int j = 0; j < 100; j++) {
 				extern_nodes[node_count].val[j] = atof(vecInfo[j + 1].c_str());
 			}
-			assert(vecInfo.size() == 129);
-			extern_nodes[node_count].init(128, -1);
-			cur_inst.syn_feats[syn_offset][1] = &extern_nodes[node_count];
-			for (int j = 0; j < 128; j++) {
-				extern_nodes[node_count].val[j] = atof(vecInfo[j + 1].c_str());
-			}
 			node_count++;
 
 			split_bychar(vecLine3[i], vecInfo, ' ');
@@ -635,12 +624,6 @@ void DisParser::getSynFeats(vector<Instance> &vecInsts, const string &folder) {
 			for (int j = 0; j < 500; j++) {
 				extern_nodes[node_count].val[j] = atof(vecInfo[j + 1].c_str());
 			}
-			assert(vecInfo.size() == 513);
-			extern_nodes[node_count].init(512, -1);
-			cur_inst.syn_feats[syn_offset][2] = &extern_nodes[node_count];
-			for (int j = 0; j < 512; j++) {
-				extern_nodes[node_count].val[j] = atof(vecInfo[j + 1].c_str());
-			}
 			node_count++;
 
 			split_bychar(vecLine4[i], vecInfo, ' ');
@@ -648,12 +631,6 @@ void DisParser::getSynFeats(vector<Instance> &vecInsts, const string &folder) {
 			extern_nodes[node_count].init(100, -1);
 			cur_inst.syn_feats[syn_offset][3] = &extern_nodes[node_count];
 			for (int j = 0; j < 100; j++) {
-				extern_nodes[node_count].val[j] = atof(vecInfo[j + 1].c_str());
-			}
-			assert(vecInfo.size() == 129);
-			extern_nodes[node_count].init(128, -1);
-			cur_inst.syn_feats[syn_offset][3] = &extern_nodes[node_count];
-			for (int j = 0; j < 128; j++) {
 				extern_nodes[node_count].val[j] = atof(vecInfo[j + 1].c_str());
 			}
 			node_count++;
@@ -666,22 +643,11 @@ void DisParser::getSynFeats(vector<Instance> &vecInsts, const string &folder) {
 				extern_nodes[node_count].val[j] = atof(vecInfo[j + 1].c_str());
 			}
 			node_count++;
+
 			extern_nodes[node_count].init(400, -1);
 			cur_inst.syn_feats[syn_offset][5] = &extern_nodes[node_count];
 			for (int j = 0; j < 400; j++) {
 				extern_nodes[node_count].val[j] = atof(vecInfo[j + 401].c_str());
-			}
-			assert(vecInfo.size() == 1025);
-			extern_nodes[node_count].init(512, -1);
-			cur_inst.syn_feats[syn_offset][4] = &extern_nodes[node_count];
-			for (int j = 0; j < 512; j++) {
-				extern_nodes[node_count].val[j] = atof(vecInfo[j + 1].c_str());
-			}
-			node_count++;
-			extern_nodes[node_count].init(512, -1);
-			cur_inst.syn_feats[syn_offset][5] = &extern_nodes[node_count];
-			for (int j = 0; j < 512; j++) {
-				extern_nodes[node_count].val[j] = atof(vecInfo[j + 513].c_str());
 			}
 			node_count++;
 		}
